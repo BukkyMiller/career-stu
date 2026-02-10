@@ -1,233 +1,329 @@
-# RIASEC Career Explorer
+# Career STU 🎓
 
-AI-powered career classification system that maps job skills to RIASEC (Holland) codes.
+**AI-Powered Career Support Assistant**
 
-## Overview
+Career STU is an intelligent agent that guides learners from "here" (where they are now) to "there" (their career goals) through personalized RIASEC matching, skill gap analysis, and adaptive learning pathways.
 
-This system classifies 1.3M+ jobs into 120 unique 3-letter RIASEC codes based on their skills and job titles.
+## 🌟 What is Career STU?
 
-### RIASEC Types
+Career STU combines four capabilities into a single conversational AI agent:
 
-| Code | Type | Description |
-|------|------|-------------|
-| **R** | Realistic | The Doers - practical, hands-on, mechanical |
-| **I** | Investigative | The Thinkers - analytical, research, problem-solving |
-| **A** | Artistic | The Creators - creative, expressive, innovative |
-| **S** | Social | The Helpers - teaching, caring, service |
-| **E** | Enterprising | The Persuaders - leading, selling, managing |
-| **C** | Conventional | The Organizers - detail-oriented, systematic |
+1. **Intake** - Understand who the learner is and what skills they have
+2. **Goal Discovery** - Help identify career goals using RIASEC personality matching
+3. **Pathway** - Generate personalized learning paths to reach the goal
+4. **Learning Support** - Guide learner through content and track progress
 
-### 3-Letter Superpower Stack
+**Key Principle:** ONE agent with FOUR MODES, not four separate agents.
 
-Each job gets a 3-letter code where:
-- **1st letter** = Core drive (WHY you act)
-- **2nd letter** = Primary expression (HOW you act)
-- **3rd letter** = Supporting amplifier (WHAT strengthens impact)
+## 🎯 Key Features
 
-Example: **IRC** (Investigative-Realistic-Conventional)
-> "You analyze systems, build practical solutions, and organize them reliably."
+### 🤖 Intelligent Agent System
+- **Adaptive modes** that automatically transition based on learner progress
+- **Conversational interface** powered by GPT-4 or Claude
+- **Context-aware** responses that remember your journey
+- **15 specialized tools** for job search, salary lookup, and skills analysis
 
-## Quick Start
+### 📊 Data-Driven Career Matching
+- **1.3M jobs** database with detailed skills and RIASEC classifications
+- **Salary data** and market demand analysis for 999+ job titles
+- **RIASEC framework** with 120 three-letter personality codes
+- **Skill gap calculator** comparing your skills to target roles
 
-### 1. Classify a Single Job
+### 🎯 Personalized Learning Pathways
+- **Automatic skill gap analysis** between current and target roles
+- **Ordered learning sequences** optimized for your constraints
+- **Time estimates** based on your weekly availability
+- **Progress tracking** as you complete each skill
 
-```bash
-cd scripts
-python riasec_classifier.py --skills "Python, SQL, Machine Learning" --title "Data Scientist" -v
-```
+### 🔍 RIASEC Career Matching
+Based on Holland's career theory, RIASEC classifies interests into 6 types:
+- **R (Realistic)**: Hands-on, practical, mechanical
+- **I (Investigative)**: Analytical, intellectual, scientific
+- **A (Artistic)**: Creative, expressive, original
+- **S (Social)**: Helping, teaching, counseling
+- **E (Enterprising)**: Leading, persuading, managing
+- **C (Conventional)**: Organizing, detail-oriented, systematic
 
-Output:
-```
-RIASEC Code: IRC
-Primary Type: Investigative
-Confidence: 85%
-Description: You analyze systems, build practical solutions, and organize them reliably.
-```
+Your 3-letter code (e.g., "IRA") reveals your unique career "superpower stack."
 
-### 2. Interactive Mode
+## 🚀 Quick Start
 
-```bash
-python riasec_classifier.py --interactive
-```
+### Prerequisites
+- Python 3.9+
+- Anthropic API key OR OpenAI API key
 
-### 3. Process Your Job Database (1.3M jobs)
-
-```bash
-# Process job_skills.csv
-python process_jobs.py --input ../data/job_skills.csv --output ../data/jobs_riasec.parquet
-
-# Quick test with 1000 samples first
-python process_jobs.py --input ../data/job_skills.csv --sample 1000
-```
-
-### 4. Query the Classified Database
+### Installation
 
 ```bash
-# View statistics
-python query_riasec.py --stats
+# Clone the repository
+git clone https://github.com/BukkyMiller/career-stu.git
+cd career-stu
 
-# Find jobs by RIASEC code
-python query_riasec.py --code IRC
+# Install dependencies
+pip install -r requirements.txt
 
-# Find jobs by skills
-python query_riasec.py --skills "Python, Machine Learning"
+# Configure environment
+cp .env.example .env
+# Add your API key to .env
 
-# Find similar jobs
-python query_riasec.py --similar "Software Engineer"
+# Initialize database
+python3 -c "from database.connection import init_db; init_db()"
+
+# Launch the UI
+streamlit run ui/streamlit_app.py
 ```
 
-## Project Structure
+**Note:** The large job database files (400MB+) are not in the repository. See `data/DATA.md` for instructions on obtaining them.
+
+### Your First Session
+
+1. **Open** http://localhost:8501
+2. **Create** a learner profile with your email
+3. **Chat** with Career STU about your background and goals
+4. **Watch** as the agent guides you through discovery, planning, and learning
+
+Example conversation:
+```
+You: "Hi! I'm a software developer with 3 years experience in Python and SQL.
+      I'm interested in transitioning to data science."
+
+Career STU: "Great to meet you! Let me help you explore data science careers.
+             First, I'll analyze your skills to understand your RIASEC type..."
+```
+
+## 📐 Architecture
 
 ```
-career-explorer/
-├── data/
-│   ├── riasec_framework.json     # RIASEC definitions & 120 combinations
-│   ├── job_skills.csv            # Your 1.3M jobs with skills
-│   ├── job_details.csv           # Job details (title, company, location)
-│   └── jobs_riasec.parquet       # Classified output database
-│
-├── scripts/
-│   ├── riasec_classifier.py      # Core classification logic
-│   ├── process_jobs.py           # Batch database processor
-│   └── query_riasec.py           # Query and explore results
-│
-└── README.md
+┌─────────────────────────────────────────────────────────────────┐
+│                     CAREER STU AGENT                             │
+│                                                                  │
+│  ┌──────────┐    ┌──────────────┐    ┌──────────┐    ┌────────┐│
+│  │  INTAKE  │───▶│GOAL_DISCOVERY│───▶│ PATHWAY  │───▶│LEARNING││
+│  └──────────┘    └──────────────┘    └──────────┘    └────────┘│
+│       │                 │                   │              │     │
+│       └─────────────────┴───────────────────┴──────────────┘     │
+│                            │                                     │
+│                    ┌───────┴────────┐                           │
+│                    │   15 TOOLS     │                           │
+│                    └───────┬────────┘                           │
+└────────────────────────────┼──────────────────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+   ┌────▼────┐        ┌──────▼──────┐      ┌────▼────┐
+   │ DuckDB  │        │   1.3M Jobs │      │  APIs   │
+   │ Learner │        │   Parquet   │      │ LLM     │
+   │  Data   │        │   Files     │      │ (GPT-4) │
+   └─────────┘        └─────────────┘      └─────────┘
 ```
 
-## Classification Logic
+## 🔧 The Four Modes
 
-### How Skills Map to RIASEC
+### 1️⃣ INTAKE Mode
+**Goal:** Build comprehensive learner profile
 
-The classifier uses weighted scoring:
+Career STU gathers:
+- Current job and industry
+- Skills with proficiency levels
+- Time constraints and study availability
+- Career motivation (exploring, promotion, transition, etc.)
 
-| Match Type | Points | Example |
-|------------|--------|---------|
-| Strong indicator | +3.0 | "machine learning" → I |
-| Moderate indicator | +1.5 | "analytical" → I |
-| Type keyword | +1.0 | "research" → I |
-| Title bonus | +2.0 | Extra if skill appears in title |
+**Transition:** Profile complete → GOAL_DISCOVERY
 
-### Sample Skill Mappings
+### 2️⃣ GOAL_DISCOVERY Mode
+**Goal:** Find career direction using RIASEC
 
-**Realistic (R):**
-- Strong: maintenance, repair, construction, welding, CDL, truck driving, HVAC, forklift
-- Moderate: hands-on, technical, field work, troubleshooting
+Career STU:
+- Infers your RIASEC type from skills and preferences
+- Shows matching jobs from 1.3M database
+- Displays salary data and market demand
+- Helps you commit to a specific career goal
 
-**Investigative (I):**
-- Strong: research, data analysis, Python, machine learning, statistics, engineering
-- Moderate: problem-solving, analytical, critical thinking
+**Transition:** Goal committed → PATHWAY
 
-**Artistic (A):**
-- Strong: graphic design, UI/UX, photography, creative writing, Adobe, Figma
-- Moderate: creative, innovative, visual, design
+### 3️⃣ PATHWAY Mode
+**Goal:** Create personalized learning plan
 
-**Social (S):**
-- Strong: teaching, nursing, customer service, counseling, healthcare
-- Moderate: communication, empathy, teamwork, helping
+Career STU:
+- Calculates your skill gap vs. target role
+- Generates ordered learning sequence
+- Estimates time based on your availability
+- Creates trackable pathway in database
 
-**Enterprising (E):**
-- Strong: sales, management, leadership, marketing, business development
-- Moderate: strategic, competitive, networking, persuading
+**Transition:** Pathway accepted → LEARNING
 
-**Conventional (C):**
-- Strong: accounting, administrative, data entry, compliance, Excel, QuickBooks
-- Moderate: organized, detail-oriented, systematic, documentation
+### 4️⃣ LEARNING Mode
+**Goal:** Support daily learning and track progress
 
-## Advanced Usage
+Career STU:
+- Knows your current skill in progress
+- Recommends learning resources
+- Answers questions about concepts
+- Updates completion status
+- Celebrates milestones
 
-### Join Multiple Data Sources
+**Transition:** Goal changed → back to GOAL_DISCOVERY
+
+## 🛠️ Available Tools
+
+Career STU has 15 specialized tools:
+
+**Job Search:**
+- `search_jobs` - Find by title, skills, location, level
+- `search_jobs_by_riasec` - Find by personality match
+- `get_job_details` - Get complete job information
+
+**RIASEC Analysis:**
+- `infer_riasec_from_skills` - Predict personality type
+- `get_riasec_description` - Explain codes
+- `compare_riasec_codes` - Assess job fit
+
+**Market Intelligence:**
+- `get_salary_info` - Salary and demand data
+- `get_high_demand_jobs` - Find hot careers
+
+**Skills Analysis:**
+- `calculate_skill_gap` - Compare to target role
+- `find_jobs_by_skill_match` - Find best-fit jobs
+
+**Learner Management:**
+- `get_learner_context` - Full profile and progress
+- `update_learner_profile` - Update information
+- `add_learner_skill` - Track new skills
+- `set_learner_goal` - Define career targets
+- `create_pathway` - Generate learning plans
+
+## 💻 Usage Options
+
+### Option 1: Streamlit UI (Recommended for Testing)
 
 ```bash
-python process_jobs.py \
-  --skills-csv ../data/job_skills.csv \
-  --details-csv ../data/job_details.csv \
-  --output ../data/unified_jobs.parquet
+streamlit run ui/streamlit_app.py
 ```
 
-### Custom Column Names
+Interactive chat interface with:
+- Real-time mode display
+- Profile and progress viewer
+- Conversation history
+- Easy learner switching
+
+### Option 2: FastAPI Backend
 
 ```bash
-python process_jobs.py \
-  --input jobs.csv \
-  --output classified.parquet \
-  --skills-col "skills_column" \
-  --link-col "url_column" \
-  --title-col "position_column"
+uvicorn api.main:app --reload
 ```
 
-### Using in Python
+RESTful API with endpoints for:
+- `/chat/message` - Send messages to agent
+- `/chat/mode/{learner_id}` - Get current mode
+- `/learner/create` - Create new learner
+- `/learner/context/{learner_id}` - Get full context
+
+**API Docs:** http://localhost:8000/docs
+
+### Option 3: Python SDK (Coming Soon)
 
 ```python
-from riasec_classifier import classify_job
+from agent.career_stu import create_agent
 
-# Classify a job
-result = classify_job(
-    skills_text="Python, SQL, Data Analysis, Machine Learning",
-    job_title="Data Scientist"
-)
-
-print(result['riasec_code'])      # IRC
-print(result['primary_type'])     # Investigative
-print(result['confidence'])       # 0.85
-print(result['description'])      # Your unique gift...
+agent = create_agent("learner-id")
+response = agent.chat("Tell me about data science careers")
 ```
 
-### Processing DataFrames
+## 📊 Data Sources
 
-```python
-import pandas as pd
-from riasec_classifier import process_dataframe
+### Job Database (1.3M jobs)
+- LinkedIn job postings with skills and RIASEC codes
+- Confidence scores for classifications
+- Job levels (Entry, Mid-Senior, Director, etc.)
+- Companies and locations
 
-df = pd.read_csv('jobs.csv')
-df_classified = process_dataframe(df, skills_col='job_skills')
+### Salary Reference (999 jobs)
+- Median annual salaries
+- Labor market tags (Shortage/Surplus)
+- Supply/demand ratios
+- Recent posting volumes
+
+### RIASEC Framework
+- 120 three-letter code combinations
+- 316 skill-to-type indicators
+- Career themes and descriptions
+- "Superpower gift" interpretations
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Test specific components
+pytest tests/test_tools.py -v
+pytest tests/test_agent.py -v
+pytest tests/test_flows.py -v
+
+# System verification
+python3 test_system.py
 ```
 
-## Output Schema
+## 🔌 LLM Provider Support
 
-The processed database includes:
+Career STU works with:
+- **Anthropic Claude** (Claude 3.5 Sonnet)
+- **OpenAI GPT** (GPT-4 Turbo)
 
-| Column | Type | Description |
-|--------|------|-------------|
-| job_link | string | Original LinkedIn URL |
-| job_skills | string | Comma-separated skills |
-| extracted_title | string | Job title (from URL or provided) |
-| riasec_code | string | 3-letter RIASEC code (e.g., "IRC") |
-| riasec_confidence | float | Confidence score (0-1) |
-| primary_riasec_type | string | Primary type name (e.g., "Investigative") |
-
-## Performance
-
-- **Processing speed:** ~5,000-10,000 jobs/second
-- **Memory efficient:** Uses batch processing
-- **1.3M jobs:** ~5-10 minutes on standard hardware
-
-## Validation
-
-Compare AI classifications against the Labor Market Analysis Excel (999 jobs with known RIASEC codes):
-
-```python
-# Load Excel reference
-excel_df = pd.read_excel('Labor_Market_Analysis_2025.xlsx')
-
-# Compare codes
-accuracy = (classified_df['riasec_code'] == excel_df['Top 3 RIASEC Code']).mean()
+Configure in `.env`:
+```bash
+LLM_PROVIDER=openai  # or anthropic
+OPENAI_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key
 ```
 
-## Framework Reference
+## 📁 Project Structure
 
-See `data/riasec_framework.json` for:
-- All 120 RIASEC combinations
-- Skill indicators (247 total)
-- Type definitions and characteristics
-- Superpower descriptions
+```
+career-stu/
+├── agent/              # AI agent system
+│   ├── system_prompt.py    # Mode-specific prompts
+│   ├── career_stu.py       # Main agent (Anthropic)
+│   └── career_stu_openai.py # OpenAI version
+├── api/                # FastAPI backend
+│   └── routes/         # Chat and learner endpoints
+├── database/           # DuckDB schema
+├── data/               # Job and RIASEC data
+├── scripts/            # RIASEC classifier utilities
+├── tools/              # 15 agent tools
+├── ui/                 # Streamlit interface
+└── tests/              # Test suite
+```
 
-## Credits
+## 🤝 Contributing
 
-Based on Holland's RIASEC model (Holland Codes) with extensions from the RIASEC Career Framework document.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Key areas for contribution:
+1. **RIASEC Assessment** - Add conversational 48-question assessment
+2. **Learning Content** - Integrate with Learn Anything API
+3. **Analytics** - Track learner outcomes and success metrics
+4. **UI Enhancement** - Improve Streamlit interface
+
+## 📝 License
+
+[Add your license here]
+
+## 🙏 Credits
+
+- **RIASEC Framework** - Based on Holland's career theory
+- **Job Data** - LinkedIn job postings with skill analysis
+- **AI Models** - Anthropic Claude & OpenAI GPT-4
+
+## 📞 Support
+
+- **Issues:** https://github.com/BukkyMiller/career-stu/issues
+- **Discussions:** [Coming soon]
+- **Documentation:** See `CLAUDE.md` for detailed specs
 
 ---
 
-**Questions?** Open the interactive classifier:
-```bash
-python riasec_classifier.py --interactive
-```
+**Built with ❤️ to help people find their career path**
+
+Start your journey: `streamlit run ui/streamlit_app.py`

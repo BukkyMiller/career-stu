@@ -282,6 +282,12 @@ ANTHROPIC_API_KEY=your-key
 
 ```
 career-stu/
+├── .claude/
+│   └── skills/         # Integrated Anthropic skills
+│       ├── frontend-design      # UI creation
+│       ├── web-artifacts-builder # Interactive content
+│       ├── webapp-testing        # Automated testing
+│       └── canvas-design         # Visual artifacts
 ├── agent/              # AI agent system
 │   ├── system_prompt.py    # Mode-specific prompts
 │   ├── career_stu.py       # Main agent (Anthropic)
@@ -296,6 +302,36 @@ career-stu/
 └── tests/              # Test suite
 ```
 
+## 🎨 Integrated Anthropic Skills
+
+Career STU includes four powerful skills from [Anthropic's Skills Repository](https://github.com/anthropics/skills) to enhance the learning experience:
+
+### Frontend Design
+Create production-grade UI for course creation and learning dashboards
+```bash
+/frontend-design
+```
+
+### Web Artifacts Builder
+Build interactive modules, widgets, and simulations for course content
+```bash
+/web-artifacts-builder
+```
+
+### Webapp Testing
+Automated E2E testing with Playwright for quality assurance
+```bash
+/webapp-testing
+```
+
+### Canvas Design
+Generate visual artifacts like infographics, posters, and certificates
+```bash
+/canvas-design
+```
+
+**Learn more:** See `.claude/skills/SKILLS_OVERVIEW.md` for detailed usage guide.
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -304,7 +340,7 @@ Key areas for contribution:
 1. **RIASEC Assessment** - Add conversational 48-question assessment
 2. **Learning Content** - Integrate with Learn Anything API
 3. **Analytics** - Track learner outcomes and success metrics
-4. **UI Enhancement** - Improve Streamlit interface
+4. **UI Enhancement** - Leverage integrated skills for better interfaces
 
 ## 📝 License
 

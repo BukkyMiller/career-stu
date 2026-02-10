@@ -33,6 +33,10 @@ ENV/
 *.db
 *.sqlite
 
+# Large data files (too big for GitHub)
+data/jobs_riasec.parquet
+data/unified_jobs.parquet
+
 # Jupyter
 .ipynb_checkpoints
 

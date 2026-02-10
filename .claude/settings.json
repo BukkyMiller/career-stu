@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/query_skills.py*)",
+      "Read(data/*)",
+      "Read(scripts/*)"
+    ]
+  }
+}

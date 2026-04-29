@@ -60,3 +60,6 @@ temp/
 # OS
 .DS_Store
 Thumbs.db
+
+# Working documents (root level only, not in docs/)
+/*.docx

@@ -1,44 +1,31 @@
 """
-System prompt builder for Career STU agent
-Builds mode-specific prompts for the four modes: INTAKE, GOAL_DISCOVERY, PATHWAY, LEARNING
+System prompt builder for Career STU — Multi-Agent Orchestration Architecture
+
+This module builds agent-specific system prompts for the supervisor/worker architecture:
+  - Agent 1: Orchestrator & Intake  (handles routing + INTAKE mode directly)
+  - Agent 2: Career Explorer & Goal Setting  (CAREER_EXPLORATORY + CAREER_GOAL_SETTING)
+  - Agent 3: Career Path  (PATHWAY mode)
+  - Agent 4: Course Creation & Learning  (LEARNING mode)
+
+Prompts are stored as markdown files in agent/prompts/ and loaded at runtime.
+The build_system_prompt() and determine_mode() functions remain the public API
+so that career_stu.py continues to work without changes.
 """
 from typing import Dict, Any
 
+from agent.prompts import load_prompt_for_mode, MODE_TO_AGENT
 
-BASE_PROMPT = """You are Career STU, an AI career support assistant that guides learners from where they are now to their career goals.
+
+# ---------------------------------------------------------------------------
+# Legacy inline prompts preserved for reference / fallback
+# ---------------------------------------------------------------------------
+
+_LEGACY_BASE_PROMPT = """You are Career STU, an AI career support assistant that guides learners from where they are now to their career goals.
 
 # Core Principle
-You are ONE agent with FOUR MODES, not four separate agents. You transition between modes based on the learner's current state and progress.
-
-# The Four Modes
-
-1. **INTAKE MODE** - Build learner profile
-   - Gather background (job, industry, experience, education)
-   - Collect skills and validate proficiency
-   - Understand constraints (time, family, employment)
-   - Determine disposition (unclear, discontent, promotion-seeking, called)
-   - Transition to GOAL_DISCOVERY when profile is complete
-
-2. **GOAL_DISCOVERY MODE** - Find career direction using RIASEC
-   - Infer RIASEC type from skills and preferences
-   - Search matching jobs using RIASEC codes
-   - Show salary and market demand data
-   - Help learner commit to a goal
-   - Transition to PATHWAY when goal is committed
-
-3. **PATHWAY MODE** - Create learning plan
-   - Calculate skill gap between learner and target job
-   - Generate ordered list of skills to learn
-   - Estimate time based on weekly study hours
-   - Create pathway in database
-   - Transition to LEARNING when pathway is accepted
-
-4. **LEARNING MODE** - Support daily learning
-   - Know current skill in progress
-   - Recommend learning content
-   - Answer questions about the skill
-   - Track completion and update progress
-   - Celebrate milestones
+You are the ORCHESTRATOR of a multi-agent career support system. You analyse every
+learner message, decide which specialised agent should handle it, and return a
+seamless, consolidated response. The learner never sees agent boundaries.
 
 # Your Tools
 
@@ -55,7 +42,8 @@ You have access to these tools to help learners:
 - compare_riasec_codes: Compare learner's RIASEC to job's RIASEC
 
 **Salary & Market:**
-- get_salary_info: Look up salary and market demand
+- get_salary_info: Look up salary and market demand (with fuzzy matching and cross-database fallback)
+- get_comprehensive_market_data: Search BOTH databases in one call — salary, listings, skills, RIASEC, market demand
 - get_high_demand_jobs: Find jobs with labor shortages
 
 **Skills Analysis:**
@@ -95,126 +83,34 @@ RIASEC codes are 3 letters (e.g., "SRI", "IRA") where:
 """
 
 
-MODE_PROMPTS = {
-    "INTAKE": """
-# Current Mode: INTAKE
-
-The learner is new. Your goal is to build their profile by gathering:
-
-1. **Background**: Current job, industry, years of experience, education level
-2. **Skills**: What they know and how well (proficiency levels)
-3. **Constraints**: Time available per week, family obligations, employment status
-4. **Disposition**: Why they're here (unclear about direction, discontent with current job, seeking promotion, felt called to new career)
-
-**Conversation approach:**
-- Start with open questions ("Tell me about your current role")
-- Follow up to get specifics
-- Validate self-reported skills by asking how they've used them
-- Be sensitive to employment status and constraints
-- Don't rush - building trust is important
-
-**When to transition:**
-Once you have a solid understanding of their background, skills, and constraints, use `update_learner_profile` with `profile_complete: True` and transition to GOAL_DISCOVERY mode.
-""",
-
-    "GOAL_DISCOVERY": """
-# Current Mode: GOAL_DISCOVERY
-
-The learner has a profile but needs help finding their career direction.
-
-**Your process:**
-
-1. **Infer RIASEC type** from their skills using `infer_riasec_from_skills`
-2. **Validate with preferences** by asking:
-   - "Do you prefer working with people, data, or things?"
-   - "Are you more creative or analytical?"
-   - "Do you like leading teams or working independently?"
-3. **Search matching jobs** using `search_jobs_by_riasec`
-4. **Show opportunities** with salary and market demand data
-5. **Help them commit** to a goal
-
-**Conversation approach:**
-- Explain their RIASEC type in simple terms
-- Show 3-5 job options that match their type
-- Include salary data and market demand for each
-- Let them explore multiple options before committing
-- Use `compare_riasec_codes` to assess fit
-
-**When to transition:**
-Once learner commits to a specific job goal, use `set_learner_goal` with `status: 'committed'` and transition to PATHWAY mode.
-""",
-
-    "PATHWAY": """
-# Current Mode: PATHWAY
-
-The learner has committed to a goal. Create their learning pathway.
-
-**Your process:**
-
-1. **Calculate skill gap** using `calculate_skill_gap`
-2. **Present the gap** clearly (what they have vs. what they need)
-3. **Order skills** by logical learning sequence
-4. **Estimate time** based on their weekly study hours
-5. **Get buy-in** before creating the pathway
-6. **Create pathway** using `create_pathway`
-
-**Conversation approach:**
-- Be honest about the gap size
-- Explain why skills are ordered the way they are
-- Give realistic time estimates (no false optimism)
-- Ask about their constraints and adjust if needed
-- Celebrate what they already have
-- Make it feel achievable
-
-**When to transition:**
-After creating the pathway, transition to LEARNING mode.
-""",
-
-    "LEARNING": """
-# Current Mode: LEARNING
-
-The learner has an active pathway. Support their daily learning.
-
-**Your responsibilities:**
-
-1. **Know where they are** - Check current skill in pathway
-2. **Recommend content** - Suggest learning resources (future: Learn Anything integration)
-3. **Answer questions** - Help them understand concepts
-4. **Track progress** - Update skill status as they progress
-5. **Celebrate wins** - Acknowledge completed skills
-
-**Conversation approach:**
-- Check in on their progress regularly
-- Be available for questions without being pushy
-- Encourage consistency over intensity
-- Help them overcome learning obstacles
-- Update pathway progress using pathway tools
-- Adapt if they get stuck or lose motivation
-
-**When to transition:**
-If learner wants to change goals, transition back to GOAL_DISCOVERY mode.
-"""
-}
-
+# ---------------------------------------------------------------------------
+# Public API  (consumed by career_stu.py)
+# ---------------------------------------------------------------------------
 
 def build_system_prompt(mode: str, learner_context: Dict[str, Any]) -> str:
     """
-    Build a complete system prompt for the current mode
+    Build a complete system prompt for the current mode by loading
+    the full agent prompt from agent/prompts/<agent>.md and appending
+    dynamic learner context.
 
     Args:
-        mode: One of INTAKE, GOAL_DISCOVERY, PATHWAY, LEARNING
+        mode: One of INTAKE, GOAL_DISCOVERY, CAREER_EXPLORATORY,
+              CAREER_GOAL_SETTING, PATHWAY, LEARNING
         learner_context: Current learner data from get_learner_context
 
     Returns:
         Complete system prompt string
     """
-    prompt = BASE_PROMPT + "\n\n"
+    # --- Load the rich agent prompt from markdown --------------------------
+    try:
+        agent_prompt = load_prompt_for_mode(mode)
+    except (ValueError, FileNotFoundError):
+        # Fallback: use the legacy base prompt if file is missing
+        agent_prompt = _LEGACY_BASE_PROMPT
 
-    # Add mode-specific instructions
-    if mode in MODE_PROMPTS:
-        prompt += MODE_PROMPTS[mode] + "\n\n"
+    prompt = agent_prompt + "\n\n"
 
-    # Add learner context summary
+    # --- Append dynamic learner context ------------------------------------
     if learner_context:
         prompt += "# Current Learner Context\n\n"
 
@@ -222,6 +118,7 @@ def build_system_prompt(mode: str, learner_context: Dict[str, Any]) -> str:
         profile = learner_context.get("profile", {})
         skills = learner_context.get("skills", [])
         goals = learner_context.get("goals", [])
+        pathway = learner_context.get("active_pathway")
 
         if learner:
             prompt += f"**Learner ID:** {learner.get('id')}\n"
@@ -230,29 +127,61 @@ def build_system_prompt(mode: str, learner_context: Dict[str, Any]) -> str:
         if profile:
             if profile.get('current_job_title'):
                 prompt += f"**Current Role:** {profile.get('current_job_title')}\n"
+            if profile.get('current_industry'):
+                prompt += f"**Industry:** {profile.get('current_industry')}\n"
+            if profile.get('years_experience'):
+                prompt += f"**Years Experience:** {profile.get('years_experience')}\n"
+            if profile.get('education_level'):
+                prompt += f"**Education:** {profile.get('education_level')}\n"
             if profile.get('inferred_riasec_code'):
                 prompt += f"**RIASEC Type:** {profile.get('inferred_riasec_code')}\n"
             if profile.get('weekly_study_hours'):
                 prompt += f"**Weekly Study Hours:** {profile.get('weekly_study_hours')}\n"
+            if profile.get('disposition'):
+                prompt += f"**Disposition:** {profile.get('disposition')}\n"
+            if profile.get('employment_status'):
+                prompt += f"**Employment Status:** {profile.get('employment_status')}\n"
+            prompt += f"**Profile Complete:** {profile.get('profile_complete', False)}\n"
 
         if skills:
-            prompt += f"**Skills Count:** {len(skills)}\n"
-            skill_names = [s.get('skill_name') for s in skills[:5]]
-            prompt += f"**Top Skills:** {', '.join(skill_names)}\n"
+            prompt += f"\n**Skills ({len(skills)} total):**\n"
+            for s in skills[:10]:
+                name = s.get('skill_name', 'unknown')
+                level = s.get('proficiency_level', 'unknown')
+                prompt += f"- {name} ({level})\n"
+            if len(skills) > 10:
+                prompt += f"- ... and {len(skills) - 10} more\n"
 
         if goals:
-            latest_goal = goals[0]
-            prompt += f"**Current Goal:** {latest_goal.get('target_job_title')} ({latest_goal.get('status')})\n"
+            prompt += "\n**Goals:**\n"
+            for g in goals[:3]:
+                title = g.get('target_job_title', 'unknown')
+                status = g.get('status', 'unknown')
+                prompt += f"- {title} (status: {status})\n"
+
+        if pathway:
+            prompt += f"\n**Active Pathway:**\n"
+            prompt += f"- Total Skills: {pathway.get('total_skills', 0)}\n"
+            prompt += f"- Completed: {pathway.get('completed_skills', 0)}\n"
+            prompt += f"- Status: {pathway.get('status', 'unknown')}\n"
+            prompt += f"- Estimated Hours: {pathway.get('estimated_hours', 'N/A')}\n"
 
     return prompt
 
 
 def determine_mode(learner_context: Dict[str, Any]) -> str:
     """
-    Determine which mode the agent should be in based on learner context
+    Determine which mode / agent should handle the next interaction
+    based on learner context.
 
-    Returns:
-        One of: INTAKE, GOAL_DISCOVERY, PATHWAY, LEARNING
+    Returns one of:
+        INTAKE              → Agent 1 (Orchestrator handles directly)
+        GOAL_DISCOVERY      → Agent 2 (Career Explorer — exploratory sub-mode)
+        PATHWAY             → Agent 3 (Career Path)
+        LEARNING            → Agent 4 (Course Creation & Learning)
+
+    Note: CAREER_EXPLORATORY and CAREER_GOAL_SETTING are sub-modes within
+    Agent 2 that can be further refined by the orchestrator at runtime.
     """
     if not learner_context:
         return "INTAKE"
@@ -263,18 +192,34 @@ def determine_mode(learner_context: Dict[str, Any]) -> str:
     pathway = learner_context.get("active_pathway")
 
     # Check if learner is new or profile incomplete
-    if learner.get("status") == "new" or not profile.get("profile_complete"):
+    # Use == True to explicitly check for True value, treating None/False as incomplete
+    profile_complete = profile.get("profile_complete")
+    if learner.get("status") == "new" or profile_complete != True:
         return "INTAKE"
 
-    # Check if has active pathway
+    # Check if has active pathway → LEARNING (Agent 4)
     if pathway and pathway.get("status") == "active":
         return "LEARNING"
 
-    # Check if has committed goal but no pathway
+    # Check if has committed goal but no pathway → PATHWAY (Agent 3)
     if goals:
         latest_goal = goals[0]
         if latest_goal.get("status") == "committed":
             return "PATHWAY"
 
-    # Otherwise, in goal discovery
+    # Otherwise → GOAL_DISCOVERY (Agent 2)
     return "GOAL_DISCOVERY"
+
+
+def determine_agent(mode: str) -> str:
+    """
+    Given a mode, return the agent name responsible for it.
+
+    Args:
+        mode: One of INTAKE, GOAL_DISCOVERY, CAREER_EXPLORATORY,
+              CAREER_GOAL_SETTING, PATHWAY, LEARNING
+
+    Returns:
+        Agent key string matching agent/prompts/ file names.
+    """
+    return MODE_TO_AGENT.get(mode, "orchestrator_intake")

@@ -134,13 +134,28 @@ COMPARE_RIASEC_CODES = {
 # Salary & Market Tools
 GET_SALARY_INFO = {
     "name": "get_salary_info",
-    "description": "Look up salary and market demand for a job title",
+    "description": "Look up salary and market demand for a job title. Implements fuzzy matching — if 'Senior Product Manager' isn't in the salary database, it automatically tries 'Product Manager' as a baseline and cross-references the 1.3M jobs database for listing counts, skills, and level data. Returns clear signals when web_search is needed for more precise data.",
     "input_schema": {
         "type": "object",
         "properties": {
             "job_title": {
                 "type": "string",
                 "description": "Job title to look up"
+            }
+        },
+        "required": ["job_title"]
+    }
+}
+
+GET_COMPREHENSIVE_MARKET_DATA = {
+    "name": "get_comprehensive_market_data",
+    "description": "Search BOTH salary_reference AND unified_jobs databases in a single call, returning a combined market intelligence view. Returns salary data (with fuzzy matching), job listing counts, common skills, market demand, and level distribution. Use this instead of get_salary_info when you need a complete picture of a career's market data.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "job_title": {
+                "type": "string",
+                "description": "Job title to research (e.g., 'Senior Product Manager', 'Data Scientist')"
             }
         },
         "required": ["job_title"]
@@ -328,26 +343,143 @@ CREATE_PATHWAY = {
     }
 }
 
-# All tools list
+CREATE_LEARNER = {
+    "name": "create_learner",
+    "description": "Create a new learner record",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "email": {
+                "type": "string",
+                "description": "Learner's email address"
+            },
+            "name": {
+                "type": "string",
+                "description": "Learner's name (optional)"
+            }
+        },
+        "required": ["email"]
+    }
+}
+
+# Pathway Progress Tools
+UPDATE_PATHWAY_PROGRESS = {
+    "name": "update_pathway_progress",
+    "description": "Update the status of a skill in a pathway (not_started, in_progress, completed)",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "pathway_id": {
+                "type": "string",
+                "description": "Pathway ID"
+            },
+            "skill_name": {
+                "type": "string",
+                "description": "Name of the skill to update"
+            },
+            "new_status": {
+                "type": "string",
+                "description": "New status: not_started, in_progress, or completed"
+            }
+        },
+        "required": ["pathway_id", "skill_name", "new_status"]
+    }
+}
+
+GET_PATHWAY_DETAILS = {
+    "name": "get_pathway_details",
+    "description": "Get detailed information about a pathway including all skills and their status",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "pathway_id": {
+                "type": "string",
+                "description": "Pathway ID"
+            }
+        },
+        "required": ["pathway_id"]
+    }
+}
+
+GET_CURRENT_SKILL = {
+    "name": "get_current_skill",
+    "description": "Get the current skill the learner should be working on (either in_progress or next not_started)",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "pathway_id": {
+                "type": "string",
+                "description": "Pathway ID"
+            }
+        },
+        "required": ["pathway_id"]
+    }
+}
+
+# Additional Skills Tools
+SUGGEST_NEXT_SKILLS = {
+    "name": "suggest_next_skills",
+    "description": "Suggest which skills to learn next based on skill gap analysis",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "learner_skills": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "List of skills the learner has"
+            },
+            "target_job_link": {
+                "type": "string",
+                "description": "job_link of the target job"
+            },
+            "count": {
+                "type": "integer",
+                "description": "Number of skills to suggest",
+                "default": 5
+            }
+        },
+        "required": ["learner_skills", "target_job_link"]
+    }
+}
+
+# Additional Market Tools
+GET_MARKET_INSIGHTS = {
+    "name": "get_market_insights",
+    "description": "Get overall market insights about job demand and salaries by labor market category",
+    "input_schema": {
+        "type": "object",
+        "properties": {}
+    }
+}
+
+# All tools list (22 tools total)
 ALL_TOOLS = [
-    # Job search
+    # Job search (3)
     SEARCH_JOBS,
     SEARCH_JOBS_BY_RIASEC,
     GET_JOB_DETAILS,
-    # RIASEC
+    # RIASEC (3)
     INFER_RIASEC_FROM_SKILLS,
     GET_RIASEC_DESCRIPTION,
     COMPARE_RIASEC_CODES,
-    # Salary
+    # Salary & Market (4)
     GET_SALARY_INFO,
+    GET_COMPREHENSIVE_MARKET_DATA,
     GET_HIGH_DEMAND_JOBS,
-    # Skills
+    GET_MARKET_INSIGHTS,
+    # Skills (3)
     CALCULATE_SKILL_GAP,
     FIND_JOBS_BY_SKILL_MATCH,
-    # Learner
+    SUGGEST_NEXT_SKILLS,
+    # Learner (5)
     GET_LEARNER_CONTEXT,
     UPDATE_LEARNER_PROFILE,
     ADD_LEARNER_SKILL,
     SET_LEARNER_GOAL,
-    CREATE_PATHWAY
+    CREATE_LEARNER,
+    # Pathway (4)
+    CREATE_PATHWAY,
+    UPDATE_PATHWAY_PROGRESS,
+    GET_PATHWAY_DETAILS,
+    GET_CURRENT_SKILL,
 ]

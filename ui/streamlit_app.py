@@ -18,6 +18,21 @@ from database.connection import init_db
 
 load_dotenv()
 
+
+def escape_dollars(text: str) -> str:
+    """Escape dollar signs so Streamlit doesn't render them as LaTeX math.
+    Converts standalone $ (like $142,000) to \\$ while preserving
+    intentional LaTeX blocks ($$...$$) if any exist."""
+    import re
+    # First protect any intentional LaTeX double-dollar blocks
+    text = text.replace("$$", "\x00LATEX_BLOCK\x00")
+    # Escape single dollar signs that aren't already escaped
+    text = re.sub(r'(?<!\\)\$', r'\\$', text)
+    # Restore intentional LaTeX blocks
+    text = text.replace("\x00LATEX_BLOCK\x00", "$$")
+    return text
+
+
 # Import the right agent based on provider
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic").lower()
 if LLM_PROVIDER == "openai":
@@ -130,7 +145,7 @@ def main():
     # Display chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            st.markdown(escape_dollars(message["content"]))
 
     # Chat input
     if prompt := st.chat_input("Message Career STU..."):
@@ -139,17 +154,24 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Get agent response
+        # Get agent response with streaming
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    response = st.session_state.agent.chat(prompt)
-                    st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                except Exception as e:
-                    error_msg = f"Error: {str(e)}"
-                    st.error(error_msg)
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+            try:
+                # Use streaming for better UX
+                response_placeholder = st.empty()
+                full_response = []
+
+                for chunk in st.session_state.agent.chat_stream(prompt):
+                    full_response.append(chunk)
+                    response_placeholder.markdown(escape_dollars("".join(full_response)))
+
+                final_response = "".join(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": final_response})
+
+            except Exception as e:
+                error_msg = f"Error: {str(e)}"
+                st.error(error_msg)
+                st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
 
 if __name__ == "__main__":

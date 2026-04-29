@@ -5,6 +5,7 @@ import os
 import duckdb
 from pathlib import Path
 from dotenv import load_dotenv
+import threading
 
 load_dotenv()
 
@@ -14,15 +15,23 @@ JOBS_PARQUET_PATH = os.getenv("JOBS_PARQUET_PATH", "./data/unified_jobs.parquet"
 SALARY_PARQUET_PATH = os.getenv("SALARY_PARQUET_PATH", "./data/salary_reference.parquet")
 RIASEC_JSON_PATH = os.getenv("RIASEC_JSON_PATH", "./data/riasec_framework.json")
 
+# Thread-local storage for connection pooling
+_thread_local = threading.local()
+
 
 def get_connection():
     """
-    Get a DuckDB connection
+    Get a DuckDB connection with thread-local pooling
     Creates the database file if it doesn't exist
+    Reuses connection within the same thread for better performance
     """
-    db_path = Path(DUCKDB_PATH)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    return duckdb.connect(str(db_path))
+    # Check if we already have a connection for this thread
+    if not hasattr(_thread_local, 'connection') or _thread_local.connection is None:
+        db_path = Path(DUCKDB_PATH)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        _thread_local.connection = duckdb.connect(str(db_path))
+
+    return _thread_local.connection
 
 
 def init_db():

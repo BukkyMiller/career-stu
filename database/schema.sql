@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS learner_profiles (
     preferred_format VARCHAR DEFAULT 'any',
     disposition VARCHAR,  -- unclear, discontent, promotion, called
     inferred_riasec_code VARCHAR,  -- Learner's RIASEC profile
+    behavioral_capital_signal TEXT,   -- Early signals gathered during intake
+    social_capital_signal TEXT,       -- Early signals gathered during intake
+    navigation_capital_signal TEXT,   -- Early signals gathered during intake
     profile_complete BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -71,6 +74,7 @@ CREATE TABLE IF NOT EXISTS pathway_skills (
     id VARCHAR PRIMARY KEY,
     pathway_id VARCHAR REFERENCES pathways(id),
     skill_name VARCHAR,
+    capital_type VARCHAR,  -- ksa, behavioral, social, navigation
     sequence_order INTEGER,
     status VARCHAR DEFAULT 'not_started',  -- not_started, in_progress, completed
     estimated_hours INTEGER,
